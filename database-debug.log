@@ -1,0 +1,4 @@
+07:39:43.883 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO akka.event.slf4j.Slf4jLogger - Slf4jLogger started
+07:39:44.030 [main] INFO com.firebase.server.forge.App$ - Listening at 127.0.0.1:9009
+07:39:44.506 [NamespaceSystem-akka.actor.default-dispatcher-4] INFO com.firebase.core.namespace.NamespaceActor - demo-travel-rules-default-rtdb successfully activated FBKV (SurveyIdle(0)) wait: 119ms, init: 0ms
+07:39:44.639 [NamespaceSystem-blocking-namespace-operation-dispatcher-6] INFO com.firebase.core.namespace.StateManager - Namespace demo-travel-rules-default-rtdb status Active to Active

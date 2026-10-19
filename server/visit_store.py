@@ -1,6 +1,7 @@
 """Server-only Firebase visitor aggregation. No browser writes are allowed."""
 import copy
 import hashlib
+import json
 import os
 import re
 import threading
@@ -29,7 +30,9 @@ def firebase_app():
             url = match.group(1) if match else None
         if not url:
             raise RuntimeError('FIREBASE_DATABASE_URL is required')
-        _app = firebase_admin.initialize_app(credentials.ApplicationDefault(), {'databaseURL': url}, name='travel-statistics')
+        secret = os.environ.get('FIREBASE_SERVICE_ACCOUNT_JSON')
+        credential = credentials.Certificate(json.loads(secret)) if secret else credentials.ApplicationDefault()
+        _app = firebase_admin.initialize_app(credential, {'databaseURL': url}, name='travel-statistics')
         return _app
 
 

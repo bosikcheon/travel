@@ -20,7 +20,7 @@ if(container){
       const stats=await response.json();if(turn!==sequence)return;
       render(stats.today,stats.total);
       document.querySelector('#visitor-stats-note').textContent='Firebase 누적 통계 · 한국 날짜 기준 · 브라우저별 하루 1회 / 회원 계정별 하루 1회';
-    }catch{if(turn===sequence)document.querySelector('#visitor-stats-note').textContent='저장된 Firebase 통계 표시 · 새 방문 집계에는 Python 서버의 Firebase 인증 설정이 필요합니다.';}
+    }catch{if(turn===sequence)document.querySelector('#visitor-stats-note').textContent=(['127.0.0.1','localhost'].includes(location.hostname) ? '저장된 Firebase 통계 표시 · Python 서버의 Firebase 인증 설정을 확인하세요.' : '저장된 Firebase 통계 표시 · Vercel 방문 통계 함수 배포와 서버 인증 환경변수를 확인하세요.');}
   });
  }catch{document.querySelector('#visitor-stats-note').textContent='Firebase 설정과 방문 통계 서버 연결을 확인하세요.';}
 }

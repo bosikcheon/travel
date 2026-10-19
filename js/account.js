@@ -87,8 +87,10 @@ if (form) {
         catch { await service.authSDK.signOut(service.auth).catch(() => {}); status.textContent = '인증 계정만 생성되었습니다. 운영자에게 프로필 복구를 요청하세요.'; }
       }
       if (!signup) alert('로그인 실패되었습니다.');
+      else if (error.code === 'auth/email-already-in-use') alert('이미 가입중이거나, 탈퇴회원입니다. 다른 메일주소로 가입하세요');
       else alert('회원가입에 실패했습니다.');
       status.textContent = status.textContent.includes('프로필 복구') ? status.textContent : error.code ? '이메일·비밀번호, 계정 중복 여부 및 네트워크를 확인하세요.' : error.message;
+      if (signup && error.code === 'auth/email-already-in-use') status.textContent = '이미 가입중이거나, 탈퇴회원입니다. 다른 메일주소로 가입하세요';
     } finally { button.disabled = false; form.elements.password.value = ''; if (signup) form.elements.confirmPassword.value = ''; }
   });
 }

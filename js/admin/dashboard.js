@@ -1,4 +1,5 @@
 import { connect, isAdmin } from '../firebase.js';
+import { compareMembers } from './member-sort.js';
 import { dateLabel, statusLabels, changeStatus } from '../reservations.js';
 const status = document.querySelector('#admin-status');
 const root = document.querySelector('#admin-root');
@@ -34,11 +35,12 @@ function render() {
   const key = section === 'overview' ? 'reservations' : section;
   const search = document.querySelector('#admin-search').value.trim().toLowerCase();
   document.querySelector('#member-filter-control').hidden = key !== 'members';
+  document.querySelector('#member-sort-control').hidden = key !== 'members';
   const memberFilter=document.querySelector('#member-filter').value;
   const statusFilter = document.querySelector('#reservation-status-filter').value;
   document.querySelector('#status-filter-control').hidden = key !== 'reservations';
   const stayName = r => r.stayNameAtBooking || data.stays?.[r.stayId]?.name || '숙소 정보 없음';
-  const rows = Object.entries(data[key] || {}).filter(([id,r]) => (key !== 'members' || memberFilter === 'all' || (memberFilter === 'withdrawn' ? r.withdrawn === true : r.withdrawn !== true)) && (key !== 'reservations' || statusFilter === 'all' || r.status === statusFilter) && [id,r.name,r.email,r.memberId,r.stayId,key === 'reservations' ? stayName(r) : '',key === 'reservations' ? data.members[r.memberId]?.email : '',key === 'reservations' ? data.members[r.memberId]?.name : '',r.status,r.checkIn].some(v => String(v || '').toLowerCase().includes(search))).sort((a,b) => (b[1].createdAt || 0)-(a[1].createdAt || 0));
+  const rows = Object.entries(data[key] || {}).filter(([id,r]) => (key !== 'members' || memberFilter === 'all' || (memberFilter === 'withdrawn' ? r.withdrawn === true : r.withdrawn !== true)) && (key !== 'reservations' || statusFilter === 'all' || r.status === statusFilter) && [id,r.name,r.email,r.memberId,r.stayId,key === 'reservations' ? stayName(r) : '',key === 'reservations' ? data.members[r.memberId]?.email : '',key === 'reservations' ? data.members[r.memberId]?.name : '',r.status,r.checkIn].some(v => String(v || '').toLowerCase().includes(search))).sort((a,b) => key === 'members' ? compareMembers(a,b,document.querySelector('#member-sort').value) : (b[1].createdAt || 0)-(a[1].createdAt || 0));
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   page = Math.min(page, totalPages);
   renderPagination(rows.length, totalPages);
@@ -51,7 +53,7 @@ function render() {
     for (const width of ['5%','17%','24%','12%','21%','10%','11%']) { const col=node('col'); col.style.width=width; columns.append(col); }
     table.append(columns);
   }
-  const headings = key === 'reservations' ? ['번호','예약번호','숙소명','상태','회원 이메일','성명','상세·관리'] : key === 'members' ? ['성명','회원 구분','이메일','누적 방문횟수','최종 방문일시','상세·관리'] : ['이름 / 예약번호','상태','이메일 / 연결 정보','상세·관리'];
+  const headings = key === 'reservations' ? ['번호','예약번호','숙소명','상태','회원 이메일','성명','상세·관리'] : key === 'members' ? ['번호','성명','회원 구분','이메일','누적 방문횟수','최종 방문일시','상세·관리'] : ['이름 / 예약번호','상태','이메일 / 연결 정보','상세·관리'];
   headings.forEach(t => head.append(node('th',t))); table.append(head);
   rows.slice((page - 1) * pageSize, page * pageSize).forEach(([id,r],index) => {
     const row=node('tr');
@@ -61,7 +63,7 @@ function render() {
       const stayCell = node('td'), stayText = node('span',stayName(r)); stayText.className='reservation-stay-name'; stayText.title=stayName(r); stayCell.append(stayText);
       row.append(node('td',rows.length - (page - 1) * pageSize - index),node('td',id),stayCell,stateCell,node('td',data.members[r.memberId]?.email || '회원 정보 없음'),node('td',data.members[r.memberId]?.name || '—'));
     }
-    else if (key === 'members') row.append(node('td',r.name || '—'),node('td',r.withdrawn === true ? '탈퇴회원' : r.status === 'suspended' ? '활동회원 · 이용 정지' : '활동회원'),node('td',r.email || '—'),node('td',`${Number(r.visitCount || 0).toLocaleString('ko-KR')}회`),node('td',typeof r.lastVisitedAt === 'number' ? new Date(r.lastVisitedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}) : '방문 기록 없음'));
+    else if (key === 'members') row.append(node('td',rows.length - (page - 1) * pageSize - index),node('td',r.name || '—'),node('td',r.withdrawn === true ? '탈퇴회원' : r.status === 'suspended' ? '활동회원 · 이용 정지' : '활동회원'),node('td',r.email || '—'),node('td',`${Number(r.visitCount || 0).toLocaleString('ko-KR')}회`),node('td',typeof r.lastVisitedAt === 'number' ? new Date(r.lastVisitedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}) : '방문 기록 없음'));
     else row.append(node('td',r.name || id),node('td',statusLabels[r.status] || r.status),node('td',r.email || r.stayId || r.destinationId || r.region || '—'));
     const actions=node('td');
     function action(label, handler) { const b=node('button',label); b.addEventListener('click', () => Promise.resolve().then(handler).catch(error => alert(error.message || '처리 실패'))); actions.append(b); }
@@ -180,6 +182,7 @@ function edit(key,id,record={}) {
 document.querySelector('#close-record').addEventListener('click',() => dialog.close());
 document.querySelector('.admin-sidebar').addEventListener('click',event => { const b=event.target.closest('[data-section]'); if(b) { section=b.dataset.section; page=1; if(section === 'members') document.querySelector('#member-filter').value='active'; document.querySelector('#admin-search').value=''; render(); } });
 document.querySelector('#admin-search').addEventListener('input',() => { page=1; render(); });
+document.querySelector('#member-sort').addEventListener('change',()=>{page=1;render();});
 document.querySelector('#member-filter').addEventListener('change',()=>{page=1;render();});
 document.querySelector('#page-size').addEventListener('change',event => { pageSize=Number(event.target.value); page=1; render(); });
 document.querySelector('#reservation-status-filter').addEventListener('change',() => { page=1; render(); });

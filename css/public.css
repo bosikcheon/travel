@@ -4,3 +4,5 @@
 .footer-inner>.back-to-top{width:48px;height:48px;flex:0 0 48px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--green);border-radius:50%;color:var(--green);background:var(--paper);transition:background .2s,color .2s}.footer-inner>.back-to-top:hover{background:var(--green);color:white}
 
 .footer-inner>.back-to-top{position:fixed;right:24px;bottom:24px;z-index:20;background:var(--green);color:white;box-shadow:0 4px 16px #173d2f26}.footer-inner>.back-to-top:hover{background:#173d2f}@media(max-width:700px){.footer-inner>.back-to-top{right:18px;bottom:18px}}
+
+#dialog-admin-description{white-space:pre-wrap;overflow-wrap:anywhere;max-height:45vh;overflow-y:auto;color:var(--ink)}

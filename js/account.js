@@ -8,6 +8,13 @@ if (menu) {
   const draw = async user => {
     const admin = await isAdmin(user);
     menu.replaceChildren();
+    if (user?.email) {
+      const email = document.createElement('span');
+      email.className = 'account-email';
+      email.textContent = user.email;
+      email.title = user.email;
+      menu.append(email);
+    }
     function link(text, url, action) {
       const a = document.createElement('a'); a.textContent = text; a.href = url;
       if (action) a.addEventListener('click', action);
@@ -15,7 +22,7 @@ if (menu) {
     }
     if (admin) link('대시보드', prefix + 'html/admin.html');
     else {
-      link('예약', prefix + 'html/my-bookings.html', !user ? event => { event.preventDefault(); alert('로그인후 예약하시오'); } : null);
+      link(user ? '예약/확인' : '예약', prefix + 'html/my-bookings.html', !user ? event => { event.preventDefault(); alert('로그인후 예약하시오'); } : null);
       if (!user) {
         link('회원가입', prefix + 'html/signup.html');
         link('로그인', prefix + 'html/login.html');

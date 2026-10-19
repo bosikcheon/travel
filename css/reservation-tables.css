@@ -1,0 +1,16 @@
+/* Reservation lists: fixed proportions, wrapping text, scroll only on small screens. */
+#admin-list .admin-reservations-table,#booking-list .my-bookings-table{table-layout:fixed;width:100%;min-width:0;border-collapse:collapse}
+#admin-list .admin-reservations-table th,#admin-list .admin-reservations-table td,#booking-list .my-bookings-table th,#booking-list .my-bookings-table td{padding:12px 7px;white-space:normal;overflow-wrap:anywhere;word-break:normal;vertical-align:middle;font-size:12px;line-height:1.6}
+#admin-list .admin-reservations-table th,#booking-list .my-bookings-table th{font-weight:700;background:#edf1e8;border-bottom:2px solid #d6dfd2;text-align:left}
+#admin-list .admin-reservations-table tbody tr:hover,#booking-list .my-bookings-table tbody tr:hover{background:#f0f3ec}
+.reservation-stay-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;white-space:normal;overflow-wrap:anywhere;font-weight:600}
+#admin-list .reservation-badge,#booking-list .reservation-badge{padding:6px 7px;font-size:11px;white-space:normal;text-align:center;line-height:1.5}
+#booking-list .booking-actions{display:flex;flex-direction:column;align-items:stretch;gap:7px}
+#booking-list .pastel-button,#admin-list td button{padding:7px 8px;white-space:normal;font-size:11px;min-height:32px}
+#booking-list .my-bookings-table td:first-child,#admin-list .admin-reservations-table td:first-child{color:var(--muted);text-align:center}
+#booking-list{margin-bottom:24px}
+@media(max-width:760px){#admin-list .admin-reservations-table{min-width:680px}#booking-list .my-bookings-table{min-width:850px}}
+
+#admin-list .admin-reservations-table th,#booking-list .my-bookings-table th{text-align:center}
+
+#admin-list .admin-reservations-table th,#admin-list .admin-reservations-table td,#booking-list .my-bookings-table th,#booking-list .my-bookings-table td{text-align:center}#admin-list .admin-reservations-table td.cell-align-left,#booking-list .my-bookings-table td.cell-align-left{text-align:left}

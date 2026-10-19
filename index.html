@@ -9,9 +9,9 @@
   <link rel="stylesheet" href="css/public.css">
   <script type="module" src="js/home.js"></script>
 <script type="module" src="js/live-stays.js"></script>
-<link rel="stylesheet" href="css/account.css">
-<script type="module" src="js/account.js"></script>
-</head>
+<link rel="stylesheet" href="css/account.css?v=profile6">
+<script type="module" src="js/account.js?v=profile6"></script>
+<script src="js/dialog-controls.js" defer></script><script type="module" src="js/visitors.js?v=firebase-stats7"></script></head>
 <body>
   <a class="skip-link" href="#main">본문으로 건너뛰기</a>
   <header class="site-header wrap">
@@ -36,10 +36,11 @@
       <div id="destination-grid" class="destination-grid"></div>
       <div id="empty-state" class="empty-state" hidden><h3>찾는 여행지가 아직 없어요.</h3><p>다른 이름이나 지역으로 검색해 보세요.</p><button id="reset-search" class="text-button">전체 여행지 보기 ↗</button></div>
     </section>
+    <section id="related-stays" class="wrap section" hidden aria-labelledby="related-title"><div class="section-heading"><div><p class="eyebrow green">STAYS NEAR YOUR DESTINATION</p><h2 id="related-title">선택한 여행지 주변 숙소</h2></div><a class="secondary-button" href="#stays">다른 숙소 둘러보기 ↗</a></div><p id="related-note" class="notice" role="status"></p><div id="related-stay-grid" class="stay-grid"></div></section>
     <section class="stays-section" id="stays" aria-labelledby="stays-title"><div class="wrap section"><div class="section-heading"><div><p class="eyebrow green">STAY A LITTLE LONGER</p><h2 id="stays-title">좋은 여행에는, 좋은 쉼.</h2><p>풍경 가까이에서 맞이하는 특별한 아침.</p></div><span class="section-number">02 / STAY</span></div><div id="stay-grid" class="stay-grid"></div><p class="price-note">예시 숙소와 참고 가격입니다. 날짜별 예약 가능 여부나 실제 판매 금액을 의미하지 않습니다.</p></div></section>
-    <section id="guide" class="section wrap guide"><div><p class="eyebrow green">YOUR JOURNEY, SIMPLY</p><h2>발견부터 머무름까지.</h2><p>여행의 설렘은 가볍게, 예약은 차근차근.</p></div><ol><li><span>01</span><div><h3>마음에 드는 여행지 발견</h3><p>지역과 풍경을 살펴보고 여행지를 골라요.</p></div></li><li><span>02</span><div><h3>주변 숙소에서 쉼 찾기</h3><p>여행지와 연결된 숙소 정보를 확인해요.</p></div></li><li><span>03</span><div><h3>예약 신청 후 관리자 확인</h3><p>신청 후 관리자가 가능 여부를 확인해 확정해요.</p></div></li></ol></section>
+        <section id="guide" class="section wrap guide"><div><p class="eyebrow green">YOUR JOURNEY, SIMPLY</p><h2>발견부터 머무름까지.</h2><p>여행의 설렘은 가볍게, 예약은 차근차근.</p></div><ol><li><span>01</span><div><h3>마음에 드는 여행지 발견</h3><p>지역과 풍경을 살펴보고 여행지를 골라요.</p></div></li><li><span>02</span><div><h3>주변 숙소에서 쉼 찾기</h3><p>여행지와 연결된 숙소 정보를 확인해요.</p></div></li><li><span>03</span><div><h3>예약 신청 후 관리자 확인</h3><p>신청 후 관리자가 가능 여부를 확인해 확정해요.</p></div></li></ol></section>
   </main>
   <footer class="site-footer"><div class="wrap footer-inner"><div><a class="brand" href="index.html"><span class="brand-mark">m.</span>머물다</a><p>여행의 다음 장면을 함께.</p></div><p>예약 신청 · 관리자 확인 후 확정<br>© 2026 머물다. 예시 여행 서비스.</p><a class="back-to-top" href="#" hidden aria-label="맨 위로 이동" title="맨 위로"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5m-6 6 6-6 6 6"/></svg></a></div></footer>
-  <dialog id="detail-dialog" aria-labelledby="dialog-title"><button id="close-dialog" class="dialog-close" aria-label="닫기">×</button><p class="eyebrow green" id="dialog-region"></p><h2 id="dialog-title"></h2><p id="dialog-description"></p><p class="dialog-notice" id="dialog-admin-description"></p><button id="dialog-action" class="primary-button">주변 숙소 둘러보기 ↗</button></dialog>
-</body>
+  <dialog id="detail-dialog" aria-labelledby="dialog-title"><button id="close-dialog" class="dialog-close" aria-label="닫기">×</button><p class="eyebrow green" id="dialog-region"></p><h2 id="dialog-title"></h2><img id="dialog-image" class="destination-dialog-image" alt="" hidden><p id="dialog-description"></p><p class="dialog-notice" id="dialog-admin-description"></p><div class="dialog-footer destination-dialog-footer"><button id="dialog-action" class="primary-button">주변 숙소 둘러보기 ↗</button><button type="button" class="secondary-button" data-close-dialog>창닫기</button></div></dialog>
+<aside id="visitor-stats" class="visitor-stats wrap" aria-label="방문 현황"><div><span>오늘 방문자</span><strong id="visitors-today">—</strong></div><div><span>누적 방문자</span><strong id="visitors-total">—</strong></div><p id="visitor-stats-note" role="status">방문 현황을 불러오는 중…</p></aside></body>
 </html>

@@ -22,6 +22,6 @@ export async function isAdmin(user) {
 }
 export async function memberProfile(service, user) {
   const snapshot = await service.dbSDK.get(service.dbSDK.ref(service.db, `members/${user.uid}`));
-  if (!snapshot.exists() || snapshot.val().status !== 'active') throw new Error('회원 프로필이 없거나 이용 정지된 계정입니다. 운영자에게 문의하세요.');
+  if (!snapshot.exists() || snapshot.val().status !== 'active' || snapshot.val().withdrawn === true) throw new Error('회원 프로필이 없거나 이용 정지·탈퇴한 계정입니다. 운영자에게 문의하세요.');
   return snapshot.val();
 }

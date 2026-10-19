@@ -7,7 +7,7 @@ const searchInput = document.querySelector('#search-input');
 const regionSelect = document.querySelector('#region-select');
 const dialog = document.querySelector('#detail-dialog');
 const dialogAction = document.querySelector('#dialog-action');
-let previousFocus;
+let previousFocus, selectedDestination;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -25,9 +25,16 @@ function imageFor(item) {
   return image;
 }
 function showDetail(item) {
+  selectedDestination = item;
   previousFocus = document.activeElement;
   document.querySelector('#dialog-region').textContent = item.region;
   document.querySelector('#dialog-title').textContent = item.name;
+  const image = document.querySelector('#dialog-image');
+  image.hidden = true;
+  image.removeAttribute('src');
+  image.alt = item.name;
+  image.onerror = () => { image.hidden = true; };
+  if (/^https?:\/\//.test(item.imageUrl || '')) { image.src = item.imageUrl; image.hidden = false; }
   document.querySelector('#dialog-description').textContent = item.summary || '';
   const description = document.querySelector('#dialog-admin-description');
   description.textContent = item.description || item.summary || '등록된 소개 내용이 없습니다.';
@@ -38,6 +45,7 @@ function renderDestinations(announce = false) {
   const query = searchInput.value.trim().toLocaleLowerCase('ko');
   const region = regionSelect.value;
   const items = destinations.filter(item => (region === 'all' || item.region === region) && `${item.name} ${item.region} ${item.description}`.toLocaleLowerCase('ko').includes(query));
+  if (announce) document.dispatchEvent(new CustomEvent('destination-stays-selected', { detail: { ids: items.map(item => item.id), label: region === 'all' ? (query || '선택한 여행지') : region, scroll: false } }));
   grid.replaceChildren();
   items.forEach(item => {
     const card = element('button', 'destination-card');
@@ -82,7 +90,7 @@ document.querySelector('#close-dialog').addEventListener('click', () => dialog.c
 dialog.addEventListener('close', () => previousFocus?.focus());
 dialogAction.addEventListener('click', () => {
   dialog.close();
-  document.querySelector('#stays').scrollIntoView();
+  if (selectedDestination) document.dispatchEvent(new CustomEvent('destination-stays-selected', { detail: { ids: [selectedDestination.id], label: selectedDestination.name, scroll: true } }));
 });
 renderDestinations();
 
@@ -91,7 +99,7 @@ async function loadDestinations() {
     const service = await connect();
     const { ref, query, orderByChild, equalTo, onValue } = service.dbSDK;
     onValue(query(ref(service.db, 'destinations'), orderByChild('status'), equalTo('published')), snapshot => {
-      destinations = Object.entries(snapshot.val() || {}).map(([id, value]) => ({ ...value, id }));
+      destinations = Object.entries(snapshot.val() || {}).map(([id, value]) => ({ ...value, id })).sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0) || b.id.localeCompare(a.id));
       loaded = true; loadError = '';
       const selected = regionSelect.value;
       const regions = [...new Set(destinations.map(item => item.region).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));

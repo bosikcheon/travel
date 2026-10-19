@@ -33,19 +33,35 @@ function render() {
   }
   const key = section === 'overview' ? 'reservations' : section;
   const search = document.querySelector('#admin-search').value.trim().toLowerCase();
+  document.querySelector('#member-filter-control').hidden = key !== 'members';
+  const memberFilter=document.querySelector('#member-filter').value;
+  const statusFilter = document.querySelector('#reservation-status-filter').value;
+  document.querySelector('#status-filter-control').hidden = key !== 'reservations';
   const stayName = r => r.stayNameAtBooking || data.stays?.[r.stayId]?.name || '숙소 정보 없음';
-  const rows = Object.entries(data[key] || {}).filter(([id,r]) => [id,r.name,r.email,r.memberId,r.stayId,key === 'reservations' ? stayName(r) : '',key === 'reservations' ? data.members[r.memberId]?.email : '',key === 'reservations' ? data.members[r.memberId]?.name : '',r.status,r.checkIn].some(v => String(v || '').toLowerCase().includes(search))).sort((a,b) => (b[1].createdAt || 0)-(a[1].createdAt || 0));
+  const rows = Object.entries(data[key] || {}).filter(([id,r]) => (key !== 'members' || memberFilter === 'all' || (memberFilter === 'withdrawn' ? r.withdrawn === true : r.withdrawn !== true)) && (key !== 'reservations' || statusFilter === 'all' || r.status === statusFilter) && [id,r.name,r.email,r.memberId,r.stayId,key === 'reservations' ? stayName(r) : '',key === 'reservations' ? data.members[r.memberId]?.email : '',key === 'reservations' ? data.members[r.memberId]?.name : '',r.status,r.checkIn].some(v => String(v || '').toLowerCase().includes(search))).sort((a,b) => (b[1].createdAt || 0)-(a[1].createdAt || 0));
   const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
   page = Math.min(page, totalPages);
   renderPagination(rows.length, totalPages);
   list.replaceChildren();
   if (!rows.length) { list.append(node('p','표시할 데이터가 없습니다.')); return; }
   const table = node('table'); const head=node('tr');
-  const headings = key === 'reservations' ? ['번호','예약번호','숙소명','상태','회원 이메일','성명','상세·관리'] : ['이름 / 예약번호','상태','이메일 / 연결 정보','상세·관리'];
+  if (key === 'reservations') {
+    table.className = 'admin-reservations-table';
+    const columns = node('colgroup');
+    for (const width of ['5%','17%','24%','12%','21%','10%','11%']) { const col=node('col'); col.style.width=width; columns.append(col); }
+    table.append(columns);
+  }
+  const headings = key === 'reservations' ? ['번호','예약번호','숙소명','상태','회원 이메일','성명','상세·관리'] : key === 'members' ? ['성명','회원 구분','이메일','누적 방문횟수','최종 방문일시','상세·관리'] : ['이름 / 예약번호','상태','이메일 / 연결 정보','상세·관리'];
   headings.forEach(t => head.append(node('th',t))); table.append(head);
   rows.slice((page - 1) * pageSize, page * pageSize).forEach(([id,r],index) => {
     const row=node('tr');
-    if (key === 'reservations') row.append(node('td',rows.length - (page - 1) * pageSize - index),node('td',id),node('td',stayName(r)),node('td',statusLabels[r.status] || r.status),node('td',data.members[r.memberId]?.email || '회원 정보 없음'),node('td',data.members[r.memberId]?.name || '—'));
+    if (key === 'reservations') {
+      const state = node('strong',statusLabels[r.status] || r.status); state.className = `reservation-badge state-${Object.hasOwn(statusLabels,r.status) ? r.status : 'unknown'}`;
+      const stateCell = node('td'); stateCell.append(state);
+      const stayCell = node('td'), stayText = node('span',stayName(r)); stayText.className='reservation-stay-name'; stayText.title=stayName(r); stayCell.append(stayText);
+      row.append(node('td',rows.length - (page - 1) * pageSize - index),node('td',id),stayCell,stateCell,node('td',data.members[r.memberId]?.email || '회원 정보 없음'),node('td',data.members[r.memberId]?.name || '—'));
+    }
+    else if (key === 'members') row.append(node('td',r.name || '—'),node('td',r.withdrawn === true ? '탈퇴회원' : r.status === 'suspended' ? '활동회원 · 이용 정지' : '활동회원'),node('td',r.email || '—'),node('td',`${Number(r.visitCount || 0).toLocaleString('ko-KR')}회`),node('td',typeof r.lastVisitedAt === 'number' ? new Date(r.lastVisitedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}) : '방문 기록 없음'));
     else row.append(node('td',r.name || id),node('td',statusLabels[r.status] || r.status),node('td',r.email || r.stayId || r.destinationId || r.region || '—'));
     const actions=node('td');
     function action(label, handler) { const b=node('button',label); b.addEventListener('click', () => Promise.resolve().then(handler).catch(error => alert(error.message || '처리 실패'))); actions.append(b); }
@@ -57,7 +73,10 @@ function render() {
         await authorized(); await service.dbSDK.update(service.dbSDK.ref(service.db,`${key}/${id}`),{status:key === 'stays'?'inactive':'hidden',updatedAt:service.dbSDK.serverTimestamp()}); await load();
       });
     }
-    row.append(actions); table.append(row);
+    row.append(actions);
+    if (key === 'reservations') { row.children[1].classList.add('cell-align-left'); row.children[2].classList.add('cell-align-left'); }
+    else if (key === 'stays') row.children[0].classList.add('cell-align-left');
+    table.append(row);
   }); list.append(table);
 }
 function renderPagination(total, totalPages) {
@@ -78,7 +97,7 @@ function renderPagination(total, totalPages) {
   if (last < totalPages) button('다음블록',last + 1);
   button('마지막페이지',totalPages,page === totalPages);
 }
-const fieldLabels = { id:'식별번호', name:'이름', region:'지역', address:'주소', summary:'한 줄 소개', description:'상세 설명', imageUrl:'이미지 URL', status:'상태', createdAt:'등록 일시', updatedAt:'수정 일시', destinationId:'연결 여행지', stayId:'숙소 ID', memberId:'회원 UID', email:'이메일', phone:'연락처', pricePerNight:'1박 가격', maxGuests:'최대 인원', checkIn:'체크인', checkOut:'체크아웃', guestCount:'예약 인원', nightlyPriceAtBooking:'예약 당시 1박 가격', totalPrice:'예약 총액', stayNameAtBooking:'예약 당시 숙소명', member:'예약자 성명', memberEmail:'예약자 이메일', stay:'숙소명', reservations:'예약 이력' };
+const fieldLabels = { visitCount:'누적 방문횟수', lastVisitedAt:'최종 방문일시', withdrawn:'탈퇴 여부', id:'식별번호', name:'이름', region:'지역', address:'주소', summary:'한 줄 소개', description:'상세 설명', imageUrl:'이미지 URL', status:'상태', createdAt:'등록 일시', updatedAt:'수정 일시', destinationId:'연결 여행지', stayId:'숙소 ID', memberId:'회원 UID', email:'이메일', phone:'연락처', pricePerNight:'1박 가격', maxGuests:'최대 인원', checkIn:'체크인', checkOut:'체크아웃', guestCount:'예약 인원', nightlyPriceAtBooking:'예약 당시 1박 가격', totalPrice:'예약 총액', stayNameAtBooking:'예약 당시 숙소명', member:'예약자 성명', memberEmail:'예약자 이메일', stay:'숙소명', reservations:'예약 이력' };
 function detailTable(values) {
   const table = node('table'); table.className = 'detail-table';
   const head = node('thead'), heading = node('tr'); heading.append(node('th','제목'),node('th','내용')); head.append(heading); table.append(head);
@@ -91,10 +110,11 @@ function detailTable(values) {
       } else cell.textContent = '내역이 없습니다.';
     } else {
       let display = value ?? '—';
-      if (['createdAt','updatedAt'].includes(field) && typeof value === 'number') display = new Date(value).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'});
+      if (['createdAt','updatedAt','lastVisitedAt'].includes(field) && typeof value === 'number') display = new Date(value).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'});
       if (['checkIn','checkOut'].includes(field)) display = dateLabel(value);
       if (['pricePerNight','nightlyPriceAtBooking','totalPrice'].includes(field) && typeof value === 'number') display = `${value.toLocaleString('ko-KR')}원`;
       if (field === 'status') display = statusLabels[value] || ({active:'활성',inactive:'비활성',draft:'임시저장',published:'공개',hidden:'숨김',suspended:'이용 정지'}[value]) || value;
+      if(field === 'withdrawn') display=value === true ? '탈퇴' : '활동';
       cell.textContent = display;
     }
     row.append(title,cell); tbody.append(row);
@@ -116,7 +136,7 @@ function details(key,id,record) {
     const feedback = node('p'); feedback.setAttribute('role','status');
     body.append(actionGroup,feedback);
     for (const [next,label] of options) {
-      const button=node('button',label); button.className='primary-button';
+      const button=node('button',label); button.className=`pastel-button state-${next}`;
       button.addEventListener('click',async () => {
         if (!confirm(`${label} 처리할까요?`)) return;
         actionGroup.querySelectorAll('button').forEach(b => { b.disabled=true; });
@@ -158,9 +178,11 @@ function edit(key,id,record={}) {
   }); body.append(form); dialog.showModal();
 }
 document.querySelector('#close-record').addEventListener('click',() => dialog.close());
-document.querySelector('.admin-sidebar').addEventListener('click',event => { const b=event.target.closest('[data-section]'); if(b) { section=b.dataset.section; page=1; document.querySelector('#admin-search').value=''; render(); } });
+document.querySelector('.admin-sidebar').addEventListener('click',event => { const b=event.target.closest('[data-section]'); if(b) { section=b.dataset.section; page=1; if(section === 'members') document.querySelector('#member-filter').value='active'; document.querySelector('#admin-search').value=''; render(); } });
 document.querySelector('#admin-search').addEventListener('input',() => { page=1; render(); });
+document.querySelector('#member-filter').addEventListener('change',()=>{page=1;render();});
 document.querySelector('#page-size').addEventListener('change',event => { pageSize=Number(event.target.value); page=1; render(); });
+document.querySelector('#reservation-status-filter').addEventListener('change',() => { page=1; render(); });
 document.querySelector('#new-record').addEventListener('click',() => edit(section));
 document.querySelector('#refresh-data').addEventListener('click',() => load().catch(error => { status.textContent=error.message; }));
 try {

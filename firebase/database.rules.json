@@ -30,8 +30,8 @@
       ".read": "auth != null && (auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1')",
       "$uid": {
         ".read": "auth != null && (auth.uid == $uid || auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1')",
-        ".write": "auth != null && newData.exists() && (auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' || (auth.uid == $uid && ((!data.exists() && newData.child('status').val() == 'active') || (data.child('status').val() == 'active' && newData.child('status').val() == data.child('status').val()))))",
-        ".validate": "newData.hasChildren(['name', 'email', 'phone', 'status', 'createdAt', 'updatedAt'])",
+        ".write": "auth != null && newData.exists() && (auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' || (auth.uid == $uid && data.child('withdrawn').val() != true && ((!data.exists() && newData.child('status').val() == 'active') || (data.child('status').val() == 'active' && newData.child('status').val() == data.child('status').val()))))",
+        ".validate": "newData.hasChildren(['name', 'email', 'phone', 'status', 'createdAt', 'updatedAt']) && (data.exists() || !newData.child('withdrawn').exists() || newData.child('withdrawn').val() == false) && newData.child('visitCount').val() == data.child('visitCount').val() && newData.child('lastVisitedAt').val() == data.child('lastVisitedAt').val()",
         "name": {
           ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 60"
         },
@@ -52,19 +52,28 @@
         },
         "$other": {
           ".validate": false
+        },
+        "withdrawn": {
+          ".validate": "newData.isBoolean() && ((!data.exists() && (newData.val() == false || root.child('members').child($uid).exists())) || (data.exists() && (data.val() == newData.val() || (data.val() == false && newData.val() == true))))"
+        },
+        "visitCount": {
+          ".validate": "newData.isNumber() && newData.val() == data.val()"
+        },
+        "lastVisitedAt": {
+          ".validate": "newData.isNumber() && newData.val() == data.val()"
         }
       }
     },
     "reservations": {
-      ".read": "auth != null && (auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' || (root.child('members').child(auth.uid).child('status').val() == 'active' && query.orderByChild == 'memberId' && query.equalTo == auth.uid))",
+      ".read": "auth != null && (auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' || (root.child('members').child(auth.uid).child('status').val() == 'active' && root.child('members').child(auth.uid).child('withdrawn').val() != true && query.orderByChild == 'memberId' && query.equalTo == auth.uid))",
       ".indexOn": [
         "memberId",
         "status",
         "checkIn"
       ],
       "$reservationId": {
-        ".read": "auth != null && (auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' || (root.child('members').child(auth.uid).child('status').val() == 'active' && data.child('memberId').val() == auth.uid))",
-        ".write": "auth != null && newData.exists() && ((!data.exists() && root.child('members').child(auth.uid).child('status').val() == 'active' && auth.uid != 'ipvSWG4VEuTCN932Iqo5BilNBqj1' && newData.child('memberId').val() == auth.uid && newData.child('status').val() == 'requested') || (data.exists() && ((auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' && ((data.child('status').val() == 'requested' && (newData.child('status').val() == 'confirmed' || newData.child('status').val() == 'rejected' || newData.child('status').val() == 'canceled')) || (data.child('status').val() == 'confirmed' && newData.child('status').val() == 'completed' && data.child('checkOut').isNumber() && data.child('checkOut').val() <= now + 32400000) || (data.child('status').val() == 'cancel_requested' && newData.child('status').val() == 'canceled'))) || (data.child('memberId').val() == auth.uid && root.child('members').child(auth.uid).child('status').val() == 'active' && (data.child('status').val() == 'requested' || data.child('status').val() == 'confirmed') && newData.child('status').val() == 'cancel_requested'))))",
+        ".read": "auth != null && (auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' || (root.child('members').child(auth.uid).child('status').val() == 'active' && root.child('members').child(auth.uid).child('withdrawn').val() != true && data.child('memberId').val() == auth.uid))",
+        ".write": "auth != null && newData.exists() && ((!data.exists() && root.child('members').child(auth.uid).child('status').val() == 'active' && root.child('members').child(auth.uid).child('withdrawn').val() != true && auth.uid != 'ipvSWG4VEuTCN932Iqo5BilNBqj1' && newData.child('memberId').val() == auth.uid && newData.child('status').val() == 'requested') || (data.exists() && ((auth.uid == 'ipvSWG4VEuTCN932Iqo5BilNBqj1' && ((data.child('status').val() == 'requested' && (newData.child('status').val() == 'confirmed' || newData.child('status').val() == 'rejected' || newData.child('status').val() == 'canceled')) || (data.child('status').val() == 'confirmed' && newData.child('status').val() == 'completed' && data.child('checkOut').isNumber() && data.child('checkOut').val() <= now + 32400000) || (data.child('status').val() == 'cancel_requested' && newData.child('status').val() == 'canceled'))) || (data.child('memberId').val() == auth.uid && root.child('members').child(auth.uid).child('status').val() == 'active' && root.child('members').child(auth.uid).child('withdrawn').val() != true && (data.child('status').val() == 'requested' || data.child('status').val() == 'confirmed') && newData.child('status').val() == 'cancel_requested'))))",
         ".validate": "newData.hasChildren(['memberId', 'stayId', 'checkIn', 'checkOut', 'guestCount', 'nightlyPriceAtBooking', 'totalPrice', 'createdAt', 'status', 'updatedAt']) && newData.child('updatedAt').isNumber() && newData.child('updatedAt').val() == now && ((!data.exists() && newData.child('memberId').isString() && newData.child('stayId').isString() && root.child('stays').child(newData.child('stayId').val()).child('status').val() == 'active' && newData.child('stayNameAtBooking').val() == root.child('stays').child(newData.child('stayId').val()).child('name').val() && newData.child('checkIn').isNumber() && newData.child('checkOut').isNumber() && newData.child('checkIn').val() % 86400000 == 0 && newData.child('checkOut').val() % 86400000 == 0 && newData.child('checkIn').val() >= now + 32400000 - ((now + 32400000) % 86400000) && newData.child('checkIn').val() <= now + 31536000000 && newData.child('checkOut').val() > newData.child('checkIn').val() && newData.child('checkOut').val() - newData.child('checkIn').val() <= 2592000000 && newData.child('guestCount').isNumber() && newData.child('guestCount').val() % 1 == 0 && newData.child('guestCount').val() >= 1 && newData.child('guestCount').val() <= root.child('stays').child(newData.child('stayId').val()).child('maxGuests').val() && newData.child('nightlyPriceAtBooking').isNumber() && newData.child('nightlyPriceAtBooking').val() >= 0 && newData.child('nightlyPriceAtBooking').val() == root.child('stays').child(newData.child('stayId').val()).child('pricePerNight').val() && newData.child('totalPrice').isNumber() && newData.child('totalPrice').val() == newData.child('nightlyPriceAtBooking').val() * ((newData.child('checkOut').val() - newData.child('checkIn').val()) / 86400000) && newData.child('createdAt').val() == now) || (data.exists() && newData.child('memberId').val() == data.child('memberId').val() && newData.child('stayId').val() == data.child('stayId').val() && newData.child('checkIn').val() == data.child('checkIn').val() && newData.child('checkOut').val() == data.child('checkOut').val() && newData.child('guestCount').val() == data.child('guestCount').val() && newData.child('nightlyPriceAtBooking').val() == data.child('nightlyPriceAtBooking').val() && newData.child('totalPrice').val() == data.child('totalPrice').val() && newData.child('createdAt').val() == data.child('createdAt').val() && newData.child('stayNameAtBooking').val() == data.child('stayNameAtBooking').val()))",
         "memberId": {
           ".validate": true
@@ -103,6 +112,14 @@
           ".validate": false
         }
       }
+    },
+    "visitSummary": {
+      ".read": true,
+      ".write": false
+    },
+    "visitStatistics": {
+      ".read": false,
+      ".write": false
     }
   }
 }

@@ -67,3 +67,27 @@ Database Rules는 목록 검색에 필요한 쿼리 조건을 확인한다. 공�
 최신 firebase/database.rules.json 전체를 Firebase 규칙 탭에 반영하고 게시한다. 관리자 UID는 이미 반영되어 있다. 이전 회원 전용 규칙만 게시한 상태라면 새 예약의 가격 검증은 동작하지 않으므로 반드시 전체 최신 규칙을 적용한다.
 
 기존 안내 중 예약 조회만 지원한다는 내용은 이전 단계 설명이다. 현재는 실제 active 숙소 표시 → 회원 예약 신청 → 관리자 확정/거절 → 내 예약 조회/취소 요청 → 관리자 취소 승인까지 연결되어 있다. 실제 데이터와 Authentication을 이용한 운영 프로젝트 통합 검증은 별도로 수행한다.
+
+
+## 회원 수정·탈퇴 기능 규칙 업데이트
+
+최신 firebase/database.rules.json 전체를 콘솔 규칙 탭에 교체 후 게시해야 withdrawn boolean 저장이 허용된다. 필드 추가를 제외한 기존 데이터 마이그레이션은 불필요하다. 이전 규칙은 이 필드를 미허용 필드로 차단한다. 관리자 UID는 기존 값을 유지한다. 로컬 검증: firebase emulators:exec --only database --project demo-travel-rules --config firebase/emulator-test.json "py firebase/test_withdrawal_rules.py".
+
+
+## Firebase 방문 통계 (이전 로컬 SQLite 집계를 대체)
+
+1. `py -m pip install -r server/requirements.txt`로 서버 SDK를 설치한다.
+2. 서버에 Google Application Default Credentials를 설정한다. 로컬 서비스 계정 방식을 사용한다면 Firebase 프로젝트 설정 → 서비스 계정에서 받은 JSON을 **프로젝트 폴더 외부**에 저장하고 PowerShell에서 `$env:GOOGLE_APPLICATION_CREDENTIALS="C:\안전한폴더\서비스계정.json"`처럼 경로를 지정한다. JSON 내용은 채팅·브라우저·GitHub에 올리지 않는다. 운영 환경은 서비스 계정 연결/워크로드 인증을 우선 사용한다.
+3. databaseURL은 js/firebase-config.js에서 읽는다. 필요하면 `$env:FIREBASE_DATABASE_URL="실제 Realtime Database URL"`로 지정한다. 실제 서비스 계정과 같은 프로젝트를 사용한다.
+4. 최신 firebase/database.rules.json 전체를 콘솔에 게시하고 `py server/server.py`로 서버를 재시작한다. 단순 http.server는 집계를 저장하지 못한다.
+
+추가 데이터: `/visitSummary/totalVisitCount`, `/visitSummary/dailyCounts/YYYY-MM-DD`는 공개 읽기·브라우저 쓰기 금지다. `/visitStatistics`는 중복 집계 방지용 비공개 서버 데이터이며 일반 회원·관리자 브라우저 모두 읽기/쓰기 금지다. 서버 Admin SDK만 기록한다. 회원 프로필에 `visitCount`(숫자), `lastVisitedAt`(서버 시각 밀리초)를 반영한다. 브라우저에서 회원 프로필을 수정할 때도 이 두 필드의 변경·삭제는 금지한다. 필드 없는 기존 회원은 0회/방문 기록 없음으로 표시한다. 회원 가입 시 브라우저에서 이 필드를 임의로 넣지 않는다.
+
+사이트는 한국 날짜 기준 같은 브라우저 하루 1회, 회원은 같은 UID 하루 1회(기기 변경 중복 제외)다. 최종 방문일시는 인증된 방문 API 호출 시 갱신한다. 로그인된 관리자도 사이트 방문에 포함되지만 회원 프로필이 없는 관리자는 회원 통계 대상이 아니다. 탈퇴·정지 회원은 회원 통계를 증가시키지 않는다. 통계는 Firebase 트랜잭션으로 중복을 방지한다. 서로 다른 서버도 같은 Firebase 프로젝트를 사용하면 합산된다. 서버 저장 실패 시 로컬 수치로 대체하지 않고 기존 Firebase 집계만 표시한다.
+
+기존 SQLite 방문 이력은 자동 이관하지 않는다. 기존 브라우저 쿠키 식별자를 서버에서만 읽고 해시를 Firebase 비공개 경로에 저장하며 원래 IP·이메일은 방문 이력에 저장하지 않는다. 집계는 새 Firebase 기능 활성화 시점부터 시작한다. 필요한 과거 집계 이관과 비공개 이력 보존 기간은 별도 확정한다. 서버 자격 증명 미설정 상태에서는 실제 저장 연동 검증을 완료할 수 없다. Vercel 정적 배포에는 Python API가 없으므로 별도 서버 배포가 필요하다.
+
+
+### 기존 로컬 방문 수 이관
+
+기존 방문 수를 유지하려면 서버 인증 설정 후 `py server/server.py --migrate-local-stats`로 실행한다. 기존 `.local-data/visitors.sqlite3`의 일별 브라우저 해시를 Firebase에 합치며 중복 키는 다시 더하지 않는다. 원본 파일은 삭제하지 않는다. 각 PC에 별도 로컬 이력이 있다면 동일 명령으로 각각 합칠 수 있다. 기존 회원별 방문 이력은 저장되지 않았으므로 과거 회원 방문횟수/최종 방문일은 추정해 만들지 않는다. 앞선 자동 이관 없음 안내와 달리, 이 명시적인 옵션으로만 이관할 수 있다.

@@ -6,3 +6,7 @@
 .footer-inner>.back-to-top{position:fixed;right:24px;bottom:24px;z-index:20;background:var(--green);color:white;box-shadow:0 4px 16px #173d2f26}.footer-inner>.back-to-top:hover{background:#173d2f}@media(max-width:700px){.footer-inner>.back-to-top{right:18px;bottom:18px}}
 
 #dialog-admin-description{white-space:pre-wrap;overflow-wrap:anywhere;max-height:45vh;overflow-y:auto;color:var(--ink)}
+
+.destination-dialog-image{width:100%;max-height:300px;object-fit:cover;border-radius:9px;margin:18px 0}
+
+.destination-dialog-footer{gap:12px;align-items:center;flex-wrap:wrap}.destination-dialog-footer .primary-button{padding:11px 18px;min-height:44px;font-size:13px}
